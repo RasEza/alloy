@@ -527,11 +527,20 @@ func (args *Arguments) Validate() error {
 	hasNetworkFeature := args.Metrics.hasNetworkFeature()
 	hasAppFeature := args.Metrics.hasAppFeature()
 
+	// Check if tracing is enabled
+	isTracingEnabled := args.TracePrinter != "" && args.TracePrinter != string(debug.TracePrinterDisabled)
+	hasOutputConfig := args.Output != nil && args.Output.Traces != nil
+
 	// Validate TracePrinter
 	if args.TracePrinter == "" {
 		args.TracePrinter = string(debug.TracePrinterDisabled)
 	} else if !debug.TracePrinter(args.TracePrinter).Valid() {
 		return fmt.Errorf("trace_printer: invalid value %q. Valid values are: disabled, counter, text, json, json_indent", args.TracePrinter)
+	}
+
+	// Validate metrics configuration first
+	if err := args.Metrics.Validate(); err != nil {
+		return err
 	}
 
 	// Services are required only when application observability is enabled
@@ -551,14 +560,11 @@ func (args *Arguments) Validate() error {
 		}
 	}
 
-	// Check that at least one feature type is enabled
-	if !hasNetworkFeature && !hasAppFeature {
-		return fmt.Errorf("metrics.features must include at least one of: network, application, application_span, application_service_graph, or application_process")
+	// Check that at least one feature type is enabled or tracing is enabled
+	if !hasNetworkFeature && !hasAppFeature && !isTracingEnabled && !hasOutputConfig {
+		return fmt.Errorf("either metrics.features must include at least one of: network, application, application_span, application_service_graph, application_process, or tracing must be enabled via trace_printer or output section")
 	}
 
-	if err := args.Metrics.Validate(); err != nil {
-		return err
-	}
 	return nil
 }
 

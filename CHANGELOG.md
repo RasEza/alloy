@@ -39,6 +39,8 @@ Main (unreleased)
 
 - Pretty print diagnostic errors when using `alloy run` (@kalleep)
 
+- Fix validation logic in `beyla.ebpf` component to ensure that either metrics or traces are enabled. (@marctc)
+
 ### Bugfixes
 
 - Fix `otelcol.receiver.filelog` documentation's default value for `start_at`. (@petewall)
